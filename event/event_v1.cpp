@@ -30,21 +30,21 @@ using event_handler = std::function<void(Tevent_args...)>;
 
 /////////////////////////////////////////////////////////////////////////////
 //===========================================================================
-class event_base_listener
+class event_listener
 {
 public:
-	virtual ~event_base_listener() = default;
+	virtual ~event_listener() = default;
 };
 
 //===========================================================================
 template<typename...Tevent_args>
-class event_listener : public event_base_listener
+class event_args_listener : public event_listener
 {
 public:
 	event_handler<Tevent_args...> _handler;
 
 public:
-	event_listener(event_handler<Tevent_args...> handler) : 
+	event_args_listener(event_handler<Tevent_args...> handler) :
 		_handler(handler) 
 	{
 	}
@@ -66,19 +66,19 @@ template<typename Tevent_target>
 class targeted_event_dispatcher
 {
 public:
-	std::unordered_map<Tevent_target, std::shared_ptr<event_base_listener>> _listeners;
+	std::unordered_map<Tevent_target, std::shared_ptr<event_listener>> _listeners;
 
 public:
 	template<typename...Tevent_args>
 	void register_handler(event_handler<Tevent_args...> handler, Tevent_target target = 0)
 	{
 		register_listener(
-			std::make_shared<event_listener<Tevent_args...>>(std::move(handler)),
+			std::make_shared<event_args_listener<Tevent_args...>>(std::move(handler)),
 			target
 		);
 	}
 
-	void register_listener(std::shared_ptr<event_base_listener> listener, Tevent_target target)
+	void register_listener(std::shared_ptr<event_listener> listener, Tevent_target target)
 	{
 		_listeners[target] = std::move(listener);
 	}
@@ -94,7 +94,7 @@ public:
 	{
 		for (auto& listener : _listeners)
 		{
-			auto l = std::dynamic_pointer_cast<event_listener<Tevent_args...>>(listener.second);
+			auto l = std::dynamic_pointer_cast<event_args_listener<Tevent_args...>>(listener.second);
 			if (l)
 			{
 				l->invoke(args...);
@@ -108,7 +108,7 @@ public:
 		auto found = _listeners.find(target);
 		if (found != _listeners.end())
 		{
-			auto l = std::dynamic_pointer_cast<event_listener<Tevent_args...>>((*found).second);
+			auto l = std::dynamic_pointer_cast<event_args_listener<Tevent_args...>>((*found).second);
 			if (l)
 			{
 				l->invoke(args...);
