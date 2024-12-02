@@ -63,15 +63,7 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 //===========================================================================
 template<typename Tevent_target>
-class base_event
-{
-public:
-	virtual ~base_event() = default;
-};
-
-//===========================================================================
-template<typename Tevent_target>
-class event : public base_event<Tevent_target>
+class targeted_event_dispatcher
 {
 public:
 	std::unordered_map<Tevent_target, std::shared_ptr<event_base_listener>> _listeners;
@@ -137,7 +129,7 @@ class event_dispatcher
 public:
 	std::unordered_map<
 		Tevent_name_type, 
-		std::shared_ptr<base_event<Tevent_target>>
+		std::shared_ptr<targeted_event_dispatcher<Tevent_target>>
 	> _events;
 
 public:
@@ -147,12 +139,12 @@ public:
 		auto found = _events.find(name);
 		if (found != _events.end())
 		{
-			auto e = std::dynamic_pointer_cast<event<Tevent_target>>((*found).second);
+			auto e = std::dynamic_pointer_cast<targeted_event_dispatcher<Tevent_target>>((*found).second);
 			e->register_handler<Tevent_args...>(handler, target);
 		}
 		else
 		{
-			auto e = std::make_shared<event<Tevent_target>>();
+			auto e = std::make_shared<targeted_event_dispatcher<Tevent_target>>();
 			_events[name] = e;
 			e->register_handler<Tevent_args...>(handler, target);
 		}
@@ -165,7 +157,7 @@ public:
 		auto found = _events.find(name);
 		if (found != _events.end())
 		{
-			auto e = std::dynamic_pointer_cast<event<Tevent_target>>((*found).second);
+			auto e = std::dynamic_pointer_cast<targeted_event_dispatcher<Tevent_target>>((*found).second);
 			if (e)
 			{
 				e->broadcast<Tevent_args...>(args...);
@@ -179,7 +171,7 @@ public:
 		auto found = _events.find(name);
 		if (found != _events.end())
 		{
-			auto e = std::dynamic_pointer_cast<event<Tevent_target>>((*found).second);
+			auto e = std::dynamic_pointer_cast<targeted_event_dispatcher<Tevent_target>>((*found).second);
 			if (e)
 			{
 				e->unicast<Tevent_args...>(target, args...);
@@ -195,7 +187,6 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 //===========================================================================
 class my_event_observer;
-template class event_dispatcher<std::string, my_event_observer*>;
 using my_event_dispatcher = event_dispatcher<std::string, my_event_observer*>;
 
 
