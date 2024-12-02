@@ -249,7 +249,7 @@ public:
 	void register_event_handler(my_event_dispatcher* dispatcher)
 	{
 		dispatcher->register_event<const my_event_t1_param&>(
-			std::string{"t1"},
+				std::string{"t1"},
 			this,
 			[this](const my_event_t1_param& data)
 			{
