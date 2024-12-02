@@ -144,26 +144,23 @@ public:
 		auto found = _targeted_event_dispatchers.find(name);
 		if (found != _targeted_event_dispatchers.end())
 		{
-			auto e = std::dynamic_pointer_cast<targeted_event_dispatcher<Tevent_target>>((*found).second);
-			e->register_handler<Tevent_args...>(handler, target);
+			auto dispatcher = (*found).second;
+			dispatcher->register_handler<Tevent_args...>(handler, target);
 		}
 		else
 		{
-			auto e = std::make_shared<targeted_event_dispatcher<Tevent_target>>();
-			_targeted_event_dispatchers[name] = e;
-			e->register_handler<Tevent_args...>(handler, target);
+			auto dispatcher = std::make_shared<targeted_event_dispatcher<Tevent_target>>();
+			_targeted_event_dispatchers[name] = dispatcher;
+			dispatcher->register_handler<Tevent_args...>(handler, target);
 		}
 	}
 
 	void unregister_target(Tevent_target target)
 	{
-		for (auto& dispatcher : _targeted_event_dispatchers)
+		for (auto& element : _targeted_event_dispatchers)
 		{
-			auto e = std::dynamic_pointer_cast<targeted_event_dispatcher<Tevent_target>>(dispatcher.second);
-			if (e)
-			{
-				e->unregister_target(target);
-			}
+			auto dispatcher = element.second;
+			dispatcher->unregister_target(target);
 		}
 	}
 
@@ -174,11 +171,8 @@ public:
 		auto found = _targeted_event_dispatchers.find(name);
 		if (found != _targeted_event_dispatchers.end())
 		{
-			auto e = std::dynamic_pointer_cast<targeted_event_dispatcher<Tevent_target>>((*found).second);
-			if (e)
-			{
-				e->broadcast<Tevent_args...>(args...);
-			}
+			auto dispatcher = (*found).second;
+			dispatcher->broadcast<Tevent_args...>(args...);
 		}
 	}
 
@@ -188,11 +182,8 @@ public:
 		auto found = _targeted_event_dispatchers.find(name);
 		if (found != _targeted_event_dispatchers.end())
 		{
-			auto e = std::dynamic_pointer_cast<targeted_event_dispatcher<Tevent_target>>((*found).second);
-			if (e)
-			{
-				e->unicast<Tevent_args...>(target, args...);
-			}
+			auto dispatcher = (*found).second;
+			dispatcher->unicast<Tevent_args...>(target, args...);
 		}
 	}
 };
