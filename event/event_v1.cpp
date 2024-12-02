@@ -36,6 +36,11 @@ public:
 	virtual ~event_listener() = default;
 };
 
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////
 //===========================================================================
 template<typename...Tevent_args>
 class event_args_listener : public event_listener
@@ -123,21 +128,21 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 //===========================================================================
-template<typename Tevent_name_type, typename Tevent_target = void*>
+template<typename Tevent_type, typename Tevent_target = void*>
 class event_dispatcher
 {
 public:
 	std::unordered_map<
-		Tevent_name_type, 
+		Tevent_type, 
 		std::shared_ptr<targeted_event_dispatcher<Tevent_target>>
-	> _events;
+	> _targeted_event_dispatchers;
 
 public:
 	template<typename...Tevent_args>
-	void register_event(Tevent_name_type name, Tevent_target target, event_handler<Tevent_args...> handler)
+	void register_event(Tevent_type name, Tevent_target target, event_handler<Tevent_args...> handler)
 	{
-		auto found = _events.find(name);
-		if (found != _events.end())
+		auto found = _targeted_event_dispatchers.find(name);
+		if (found != _targeted_event_dispatchers.end())
 		{
 			auto e = std::dynamic_pointer_cast<targeted_event_dispatcher<Tevent_target>>((*found).second);
 			e->register_handler<Tevent_args...>(handler, target);
@@ -145,17 +150,29 @@ public:
 		else
 		{
 			auto e = std::make_shared<targeted_event_dispatcher<Tevent_target>>();
-			_events[name] = e;
+			_targeted_event_dispatchers[name] = e;
 			e->register_handler<Tevent_args...>(handler, target);
+		}
+	}
+
+	void unregister_target(Tevent_target target)
+	{
+		for (auto& dispatcher : _targeted_event_dispatchers)
+		{
+			auto e = std::dynamic_pointer_cast<targeted_event_dispatcher<Tevent_target>>(dispatcher.second);
+			if (e)
+			{
+				e->unregister_target(target);
+			}
 		}
 	}
 
 public:
 	template<typename...Tevent_args>
-	void dispatch(Tevent_name_type name, Tevent_args... args)
+	void dispatch(Tevent_type name, Tevent_args... args)
 	{
-		auto found = _events.find(name);
-		if (found != _events.end())
+		auto found = _targeted_event_dispatchers.find(name);
+		if (found != _targeted_event_dispatchers.end())
 		{
 			auto e = std::dynamic_pointer_cast<targeted_event_dispatcher<Tevent_target>>((*found).second);
 			if (e)
@@ -166,10 +183,10 @@ public:
 	}
 
 	template<typename...Tevent_args>
-	void dispatch(Tevent_name_type name, Tevent_target target, Tevent_args... args)
+	void dispatch(Tevent_type name, Tevent_target target, Tevent_args... args)
 	{
-		auto found = _events.find(name);
-		if (found != _events.end())
+		auto found = _targeted_event_dispatchers.find(name);
+		if (found != _targeted_event_dispatchers.end())
 		{
 			auto e = std::dynamic_pointer_cast<targeted_event_dispatcher<Tevent_target>>((*found).second);
 			if (e)
