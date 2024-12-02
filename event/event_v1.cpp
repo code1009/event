@@ -194,8 +194,74 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 //===========================================================================
+template<typename Tevent_type, typename Tevent_target = void*>
+class typed_event_single_param_dispatcher
+{
+public:
+	std::unordered_map<
+		Tevent_type,
+		std::shared_ptr<targeted_event_dispatcher<Tevent_target>>
+	> _targeted_event_dispatchers;
+
+public:
+	template<typename Tevent_param>
+	void register_event(Tevent_type name, Tevent_target target, event_handler<Tevent_param> handler)
+	{
+		auto found = _targeted_event_dispatchers.find(name);
+		if (found != _targeted_event_dispatchers.end())
+		{
+			auto dispatcher = (*found).second;
+			dispatcher->register_handler<Tevent_param>(handler, target);
+		}
+		else
+		{
+			auto dispatcher = std::make_shared<targeted_event_dispatcher<Tevent_target>>();
+			_targeted_event_dispatchers[name] = dispatcher;
+			dispatcher->register_handler<Tevent_param>(handler, target);
+		}
+	}
+
+	void unregister_target(Tevent_target target)
+	{
+		for (auto& element : _targeted_event_dispatchers)
+		{
+			auto dispatcher = element.second;
+			dispatcher->unregister_target(target);
+		}
+	}
+
+public:
+	template<typename Tevent_param>
+	void dispatch(Tevent_type name, Tevent_param param)
+	{
+		auto found = _targeted_event_dispatchers.find(name);
+		if (found != _targeted_event_dispatchers.end())
+		{
+			auto dispatcher = (*found).second;
+			dispatcher->broadcast<Tevent_param>(param);
+		}
+	}
+
+	template<typename Tevent_param>
+	void dispatch(Tevent_type name, Tevent_target target, Tevent_param param)
+	{
+		auto found = _targeted_event_dispatchers.find(name);
+		if (found != _targeted_event_dispatchers.end())
+		{
+			auto dispatcher = (*found).second;
+			dispatcher->unicast<Tevent_param>(target, param);
+		}
+	}
+};
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+//===========================================================================
 class my_event_observer;
-using my_event_dispatcher = typed_event_dispatcher<std::string, my_event_observer*>;
+//using my_event_dispatcher = typed_event_dispatcher<std::string, my_event_observer*>;
+using my_event_dispatcher = typed_event_single_param_dispatcher<std::string, my_event_observer*>;
 
 
 
