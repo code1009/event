@@ -129,7 +129,7 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 //===========================================================================
 template<typename Tevent_type, typename Tevent_target = void*>
-class event_dispatcher
+class typed_event_dispatcher
 {
 public:
 	std::unordered_map<
@@ -195,7 +195,7 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 //===========================================================================
 class my_event_observer;
-using my_event_dispatcher = event_dispatcher<std::string, my_event_observer*>;
+using my_event_dispatcher = typed_event_dispatcher<std::string, my_event_observer*>;
 
 
 
